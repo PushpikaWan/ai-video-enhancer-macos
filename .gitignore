@@ -1,0 +1,14 @@
+.DS_Store
+Real-ESRGAN-ncnn-vulkan/
+*.mov
+*.mp4
+*.mkv
+*.avi
+*.png
+*.bin
+*.param
+*.zip
+build/
+frames/
+output/
+outputs/
