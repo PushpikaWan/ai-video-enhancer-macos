@@ -10,14 +10,95 @@ from pathlib import Path
 
 # Pitch modification with duration compensation; asetrate changes pitch and duration,
 # atempo restores approximate original duration. No AI speaker conversion.
+
 PRESETS = {
-    "kongo": (0.94, 65, [(140, 2.0), (350, -2.0), (2800, 1.5)], (0.16, 2.5, 15, 120)),
-    "slothy": (1.08, 85, [(160, -3.0), (450, -2.0), (2500, 2.0)], (0.18, 2.0, 25, 180)),
-    "gira": (1.12, 100, [(190, -2.0), (1200, 1.0), (3500, 2.0)], (0.18, 2.0, 12, 100)),
-    "leo": (0.97, 70, [(130, 2.0), (300, -1.5), (2600, 1.8)], (0.16, 2.7, 15, 125)),
-    "croc": (1.035, 90, [(220, -1.0), (800, 1.5), (3000, 2.0)], (0.17, 2.3, 10, 95)),
-    "zee": (1.11, 110, [(180, -2.0), (2500, 2.0), (5000, 1.5)], (0.18, 2.0, 10, 100)),
+    # KONGO — Massive, deep, heavy, powerful
+    "kongo": {
+        "pitch": 0.73,
+        "hp": 50,
+        "eq": [
+            (100, 5),
+            (280, -3),
+            (900, -2),
+            (2600, 3),
+            (4800, -2)
+        ],
+        "comp": (0.12, 4.0, 10, 140)
+    },
+
+    # SLOTHY — Relaxed, dry, slightly nasal, sarcastic
+    "slothy": {
+        "pitch": 1.10,
+        "hp": 110,
+        "eq": [
+            (160, -4),
+            (450, -2),
+            (950, 4),
+            (2300, 2),
+            (5500, -3)
+        ],
+        "comp": (0.22, 1.6, 30, 200)
+    },
+
+    # GIRA — High, thin, awkward, nervous
+    "gira": {
+        "pitch": 1.36,
+        "hp": 150,
+        "eq": [
+            (180, -6),
+            (550, -3),
+            (1200, 4),
+            (3300, 5),
+            (6500, 1)
+        ],
+        "comp": (0.18, 2.0, 8, 95)
+    },
+
+    # LEO — Rich, confident, theatrical authority
+    "leo": {
+        "pitch": 0.90,
+        "hp": 65,
+        "eq": [
+            (135, 4),
+            (380, -2),
+            (1100, 2),
+            (2800, 4),
+            (6000, 1)
+        ],
+        "comp": (0.14, 3.0, 15, 150)
+    },
+
+    # CROC — Sharp, street-smart, gritty hustler
+    "croc": {
+        "pitch": 0.96,
+        "hp": 95,
+        "eq": [
+            (170, -2),
+            (550, 2),
+            (1100, 4),
+            (2800, 5),
+            (5000, 2)
+        ],
+        "comp": (0.15, 3.2, 7, 90)
+    },
+
+    # ZEE — Feminine, youthful, energetic influencer
+    "zee": {
+        "pitch": 1.42,
+        "hp": 165,
+        "eq": [
+            (160, -7),
+            (300, -5),
+            (650, -3),
+            (1200, 2),
+            (2500, 4),
+            (3800, 5),
+            (6500, 3)
+        ],
+        "comp": (0.20, 2.0, 8, 100)
+    }
 }
+
 RATE = 48000
 
 def run(cmd):
@@ -45,13 +126,34 @@ def parse_time(value):
 def filters_for(name):
     if name == 'original':
         return 'anull'
-    pitch, highpass, eqs, comp = PRESETS[name]
-    chain = [f'asetrate={RATE}*{pitch}', f'aresample={RATE}', f'atempo={1/pitch:.9f}', f'highpass=f={highpass}']
-    for f, gain in eqs:
-        chain.append(f'equalizer=f={f}:t=q:w=1:g={gain}')
+
+    preset = PRESETS[name]
+
+    pitch = float(preset["pitch"])
+    highpass = float(preset["hp"])
+    eqs = preset["eq"]
+    comp = preset["comp"]
+
+    chain = [
+        f'asetrate={RATE}*{pitch}',
+        f'aresample={RATE}',
+        f'atempo={1/pitch:.9f}',
+        f'highpass=f={highpass}'
+    ]
+
+    for freq, gain in eqs:
+        chain.append(
+            f'equalizer=f={freq}:t=q:w=1:g={gain}'
+        )
+
     threshold, ratio, attack, release = comp
-    chain.append(f'acompressor=threshold={threshold}:ratio={ratio}:attack={attack}:release={release}')
+
+    chain.append(
+        f'acompressor=threshold={threshold}:ratio={ratio}:attack={attack}:release={release}'
+    )
+
     return ','.join(chain)
+
 
 def main():
     parser = argparse.ArgumentParser(description='Extract and transform selected dialogue time ranges; outputs WAV audio only.')

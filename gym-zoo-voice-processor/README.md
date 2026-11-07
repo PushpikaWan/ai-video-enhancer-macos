@@ -7,9 +7,12 @@ Standalone audio-only time-range processor using **FFmpeg + Python 3 standard li
 - `ffmpeg` and `ffprobe` on PATH
 - `python3`
 
+
+
 ## Usage
 
 ```bash
+conda activate gym-zoo-env
 python3 gymzoo-voice.py "/path/to/scene.mp4" segments-example.json
 ```
 
