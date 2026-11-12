@@ -1,0 +1,13 @@
+{
+  "title": "The Message From Tomorrow",
+  "voice": "am_michael",
+  "speed": 0.94,
+  "cuts": [
+    {"id": "cut01", "start": 0, "duration": 4, "text": "He received a message... from tomorrow."},
+    {"id": "cut02", "start": 4, "duration": 5, "text": "It was eleven forty-seven at night. One unknown message."},
+    {"id": "cut03", "start": 9, "duration": 6, "text": "But the sender... was his own phone number."},
+    {"id": "cut04", "start": 15, "duration": 6, "text": "Four words. Don't open the door."},
+    {"id": "cut05", "start": 21, "duration": 7, "text": "Then someone knocked. Once... twice... three times."},
+    {"id": "cut06", "start": 28, "duration": 7, "text": "Another message appeared. It said... I already did."}
+  ]
+}
