@@ -1,13 +1,13 @@
+
 name: wwh-voice
+
 channels:
   - conda-forge
+
 dependencies:
   - python=3.11
-  - ffmpeg
-  - espeak-ng
-  - libsndfile
   - pip
   - pip:
-      - kokoro>=0.9.4,<1.0
-      - soundfile>=0.12,<1.0
-      - numpy>=1.24,<3
+      - kokoro==0.9.4
+      - soundfile
+      - numpy

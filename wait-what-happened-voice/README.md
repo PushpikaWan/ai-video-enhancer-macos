@@ -15,7 +15,7 @@ chmod +x setup.sh run.sh
 ./run.sh
 ```
 
-Alternatively, use:
+Alternatively but recommended, use:
 
 ```bash
 conda env create -f environment.yml
