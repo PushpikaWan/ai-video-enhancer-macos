@@ -1,0 +1,8 @@
+name: ai-caption-generator
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - mlx-whisper==0.4.3

@@ -62,6 +62,21 @@ The project menu provides:
    ffprobe and the existing Real-ESRGAN executable and models. Existing enhancer
    environment settings such as `TARGET_HEIGHT` still apply.
 4. **Open project in Finder**.
+5. **Generate subtitles**: choose audio/video in Finder. Uses the separate
+   `ai-caption-generator` conda environment and saves UTF-8 SRT files in the
+   project's `subtitles/` folder. Saved defaults are used without extra questions.
+6. **Edit subtitle defaults**: paste only the settings you want to change, ending
+   with `END`. Defaults include punctuation removal, 4 words, 22 characters,
+   1 line, English, and automatic sentence/pause splitting. Overrides persist per project.
+
+Install the caption environment once:
+
+```bash
+conda env create -f ai-video-flow/libs/ai-caption-generator/environment.yml
+```
+
+See [the standalone caption generator](libs/ai-caption-generator/README.md) for
+CLI options, model caching, and installation details.
 
 Canceling a file/folder picker returns to the menu. Source files are read only.
 Audio failures can leave partial output for inspection; reruns use a new folder.

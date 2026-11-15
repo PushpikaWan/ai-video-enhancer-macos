@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Interactive macOS video workflow; no third-party UI dependencies."""
 import json
+import importlib.util
 import math
 import re
 import subprocess
@@ -15,6 +16,7 @@ ROOT = Path(__file__).resolve().parent
 LIBS = ROOT / 'libs'
 VOICE_GENERATOR = LIBS / 'voice-generator-from-script' / 'generate.py'
 VIDEO_ENHANCER = LIBS / 'video-enhancer' / 'video-enhance-universal.sh'
+CAPTION_GENERATOR = LIBS / 'ai-caption-generator' / 'generate_captions.py'
 STATE = ROOT / '.state' / 'projects.json'
 
 
@@ -285,10 +287,58 @@ def enhance(project):
     print(f'Enhanced video: {output}')
 
 
+def caption_settings(project):
+    folder = project / 'subtitles'
+    folder.mkdir(exist_ok=True)
+    path = folder / 'config.json'
+    if not path.exists():
+        write_json(path, read_json(CAPTION_GENERATOR.parent / 'defaults.json'))
+    return path
+
+
+def generate_subtitles(project):
+    config = caption_settings(project)
+    source = browse('Choose audio or video to generate subtitles')
+    if source is None:
+        return
+    output = unique_path(project / 'subtitles', f'{source.stem}.srt')
+    log(f'Using saved caption settings: {config}')
+    with activity('Generating subtitles'):
+        subprocess.run(['conda', 'run', '--no-capture-output', '-n', 'ai-caption-generator',
+                        'python', '-u', str(CAPTION_GENERATOR), str(source),
+                        '--config', str(config), '--output', str(output)], check=True)
+    print(f'Subtitles saved: {output}')
+
+
+def edit_caption_settings(project):
+    path = caption_settings(project)
+    print(f'Current caption defaults:\n{path.read_text(encoding="utf-8")}')
+    print('Paste a JSON object with the settings to override. Unspecified settings are kept.')
+    print('Type END on its own line to save, or CANCEL to cancel.')
+    lines = []
+    while True:
+        line = input()
+        if line.strip() == 'CANCEL':
+            return
+        if line.strip() == 'END':
+            break
+        lines.append(line)
+    changes = json.loads('\n'.join(lines))
+    if not isinstance(changes, dict):
+        raise ValueError('Settings must be a JSON object.')
+    # Import only the standard-library helpers, without loading MLX into the workflow.
+    spec = importlib.util.spec_from_file_location('caption_generator', CAPTION_GENERATOR)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    config = module.validate_settings({**read_json(path), **changes})
+    write_json(path, config)
+    log(f'Caption settings saved: {path}')
+
+
 def project_menu(project):
     while True:
         print(f'\nProject: {project.name}\n{project}')
-        print('1. Get last frame from video\n2. Generate audio from narration JSON\n3. Enhance finished video\n4. Open project in Finder\n0. Back to projects')
+        print('1. Get last frame from video\n2. Generate audio from narration JSON\n3. Enhance finished video\n4. Open project in Finder\n5. Generate subtitles\n6. Edit subtitle defaults\n0. Back to projects')
         choice = input('Choose: ').strip()
         if choice == '0':
             return
@@ -302,6 +352,10 @@ def project_menu(project):
             elif choice == '4':
                 with activity('Opening project in Finder'):
                     subprocess.run(['open', str(project)], check=True)
+            elif choice == '5':
+                generate_subtitles(project)
+            elif choice == '6':
+                edit_caption_settings(project)
             else:
                 print('Choose one of the listed options.')
         except (OSError, ValueError, subprocess.CalledProcessError) as error:

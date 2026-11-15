@@ -11,6 +11,23 @@ import flow
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_subtitles_use_dedicated_environment_and_saved_defaults(self):
+        with tempfile.TemporaryDirectory() as folder:
+            project = Path(folder)
+            source = project / 'narration.wav'
+            with patch.object(flow, 'browse', return_value=source), \
+                    patch.object(flow.subprocess, 'run') as run:
+                flow.generate_subtitles(project)
+                command = run.call_args.args[0]
+                self.assertIn('ai-caption-generator', command)
+                self.assertIn(str(flow.CAPTION_GENERATOR), command)
+                config = flow.read_json(project / 'subtitles/config.json')
+                self.assertTrue(config['remove_punctuation'])
+                self.assertEqual(config['max_words'], 4)
+                config['max_words'] = 1
+                flow.write_json(project / 'subtitles/config.json', config)
+                self.assertEqual(flow.read_json(flow.caption_settings(project))['max_words'], 1)
+
     def test_enhancement_progress_hides_raw_output_and_reports_failure(self):
         helper = flow.VIDEO_ENHANCER.parent / 'progress.py'
         with tempfile.TemporaryDirectory() as directory:

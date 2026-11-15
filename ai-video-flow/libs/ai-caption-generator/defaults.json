@@ -1,0 +1,13 @@
+{
+  "max_chars": 22,
+  "max_words": 4,
+  "max_lines": 1,
+  "max_duration": 2.5,
+  "min_duration": 0.5,
+  "pause": 0.5,
+  "uppercase": false,
+  "remove_punctuation": true,
+  "language": "en",
+  "offset": 0,
+  "model": "mlx-community/whisper-large-v3-turbo"
+}
