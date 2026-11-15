@@ -1,6 +1,8 @@
 import copy
 import json
 import tempfile
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -9,6 +11,24 @@ import flow
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_enhancement_progress_hides_raw_output_and_reports_failure(self):
+        helper = flow.VIDEO_ENHANCER.parent / 'progress.py'
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / 'stage.log'
+            command = [sys.executable, str(helper), '--label', 'AI upscaling',
+                       '--total', '2', '--log', str(log), '--', sys.executable, '-c']
+            result = subprocess.run(command + ['print("tile-noise 99.99%"); print("frame=2")'],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0)
+            self.assertIn('100%', result.stdout)
+            self.assertNotIn('tile-noise', result.stdout)
+            self.assertIn('tile-noise', log.read_text())
+            result = subprocess.run(command + ['import sys; print("GPU failed"); sys.exit(3)'],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 3)
+            self.assertIn('GPU failed', result.stderr)
+            self.assertNotIn('100%', result.stdout)
+
     def setUp(self):
         self.config = {'cuts': [{'id': 'cut01', 'start': 0, 'duration': 4, 'text': 'Hello.'}]}
 

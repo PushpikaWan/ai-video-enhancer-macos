@@ -90,15 +90,17 @@ cleanup() {
 }
 trap cleanup EXIT
 # -fps_mode passthrough avoids frame duplication during extraction; CFR is expected.
-log '[3/6] Extracting source frames (FFmpeg frame/time progress follows)'
-ffmpeg -hide_banner -loglevel error -stats -i "$input" -map 0:v:0 -fps_mode passthrough "$work/source/%08d.png"
+log '[3/6] Extracting source frames'
+python3 "$script_dir/progress.py" --label 'Extracting' --total "$expected" --frames-dir "$work/source" --log "$work/extract.log" -- \
+  ffmpeg -hide_banner -loglevel error -nostats -i "$input" -map 0:v:0 -fps_mode passthrough "$work/source/%08d.png"
 source_count=$(find "$work/source" -type f -name '*.png' | wc -l | tr -d ' ')
 (( source_count > 0 )) || { echo 'No frames extracted' >&2; exit 1; }
 if [[ $expected =~ ^[0-9]+$ ]] && (( expected != source_count )); then
   echo "Warning: reported frame count $expected differs from extracted $source_count" >&2
 fi
-log "[4/6] AI upscaling $source_count frames (Real-ESRGAN progress follows)"
-"$bin" -i "$work/source" -o "$work/upscaled" -n realesr-animevideov3 -s 2 -z 2 -m "$models" -f png
+log "[4/6] AI upscaling $source_count frames"
+python3 "$script_dir/progress.py" --label 'AI upscaling' --total "$source_count" --frames-dir "$work/upscaled" --log "$work/upscale.log" -- \
+  "$bin" -i "$work/source" -o "$work/upscaled" -n realesr-animevideov3 -s 2 -z 2 -m "$models" -f png
 up_count=$(find "$work/upscaled" -type f -name '*.png' | wc -l | tr -d ' ')
 (( source_count == up_count )) || { echo "Frame mismatch: $source_count vs $up_count" >&2; exit 1; }
 # Check first enhanced frame size before encoding.
@@ -106,8 +108,9 @@ read -r aiw aih < <(ffprobe -v error -select_streams v:0 -show_entries stream=wi
 [[ $aiw == "$((w*2))" && $aih == "$((h*2))" ]] || { echo "Unexpected AI dimensions: ${aiw}x${aih}" >&2; exit 1; }
 # Audio is optional; input 1 is the source video. Encode to a temp output for atomic completion.
 partial="$work/result.mp4"
-log '[5/6] Encoding enhanced video and audio (FFmpeg frame/time progress follows)'
-ffmpeg -hide_banner -loglevel error -stats -framerate "$fps" -i "$work/upscaled/%08d.png" -i "$input" \
+log '[5/6] Encoding enhanced video and audio'
+python3 "$script_dir/progress.py" --label 'Encoding' --total "$source_count" --log "$work/encode.log" -- \
+ffmpeg -hide_banner -loglevel error -nostats -progress pipe:1 -framerate "$fps" -i "$work/upscaled/%08d.png" -i "$input" \
   -map 0:v:0 -map '1:a:0?' -vf "scale=${outw}:${outh}:flags=lanczos,setsar=1" \
   -c:v libx264 -preset "${PRESET:-slow}" -crf "${CRF:-17}" -pix_fmt yuv420p \
   -c:a aac -b:a 320k -ar 48000 -movflags +faststart "$partial"

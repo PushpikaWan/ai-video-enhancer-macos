@@ -67,10 +67,14 @@ Canceling a file/folder picker returns to the menu. Source files are read only.
 Audio failures can leave partial output for inspection; reruns use a new folder.
 
 Actions print timestamped stage, completion, and failure messages. Long frame,
-audio, and enhancement commands also print elapsed-time updates every 10 seconds.
+and audio commands also print elapsed-time updates every 10 seconds.
 Audio generation reports model loading, synthesized chunks, completed cuts, and
-timeline/report saving. Enhancement shows six stages plus FFmpeg and Real-ESRGAN
-progress. Cut percentages measure completed cuts, rather than estimated run time.
+timeline/report saving. Enhancement shows one updating percentage line per stage
+with elapsed time, hiding raw FFmpeg and Real-ESRGAN output. AI percentages track
+output frames rather than individual tile percentages. If the input frame count
+is unknown, extraction shows a frame count instead. Diagnostic logs are retained
+with temporary frames on failure. Cut percentages measure completed cuts,
+rather than estimated run time.
 
 Narration JSON uses the existing generator's format:
 

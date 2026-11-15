@@ -279,9 +279,9 @@ def enhance(project):
         return
     output = unique_path(project / 'enhanced', f'{video.stem}-AI-2x.mp4')
     log(f'Enhancement output: {output}')
-    with activity('Enhancing video'):
-        subprocess.run(['bash', str(VIDEO_ENHANCER),
-                        str(video), str(output)], check=True)
+    # The enhancer supplies its own updating progress line.
+    subprocess.run(['bash', str(VIDEO_ENHANCER),
+                    str(video), str(output)], check=True)
     print(f'Enhanced video: {output}')
 
 
