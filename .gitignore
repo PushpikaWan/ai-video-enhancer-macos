@@ -1,5 +1,5 @@
 .DS_Store
-Real-ESRGAN-ncnn-vulkan/
+ai-video-flow/libs/video-enhancer/Real-ESRGAN-ncnn-vulkan/
 *.mov
 *.mp4
 *.mkv
@@ -13,4 +13,6 @@ frames/
 output/
 outputs/
 .idea/
-Real-ESRGAN-ncnn-vulkan/
+ai-video-flow/.state/
+__pycache__/
+ai-video-flow/libs/video-enhancer/Real-ESRGAN-ncnn-vulkan/

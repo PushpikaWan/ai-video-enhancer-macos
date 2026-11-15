@@ -1,0 +1,99 @@
+# AI Video Flow
+
+Run from this repository on macOS:
+
+```bash
+bash ai-video-flow/run.sh
+```
+
+At every launch, the script automatically activates the `base` conda environment.
+There is no environment selection prompt. Conda, Python 3, and FFmpeg must be
+installed and configured first. If a prerequisite is unavailable, the launcher
+stops with setup instructions. FFmpeg is checked on PATH after activating base;
+an existing Homebrew installation also works. If FFmpeg is missing, you can install it in base:
+
+```bash
+conda install -n base -c conda-forge ffmpeg
+```
+
+Activation applies to the workflow and its child commands. Audio generation also
+requires the existing Kokoro generator's dependencies to be installed in `base`.
+
+Choose **Create a new video project**, enter a video name, and use the macOS folder
+picker to choose its parent folder. Existing folders are never silently reused.
+Choose **Continue an existing video project** to see saved names and full paths,
+or browse for a project created by this tool. The most recently opened project
+appears first. Paths persist in `ai-video-flow/.state/projects.json` between runs;
+this local registry is ignored by Git. A moved project can be found with Browse.
+
+Each project contains:
+
+```text
+My Video/
+  project.json
+  frames/       # <video-name>_lastframe.png
+  scripts/      # validated narration JSON snapshots
+  audio/        # separate output folder for each generation
+  enhanced/     # enhanced finished videos
+```
+
+The project menu provides:
+
+1. **Get last frame**: choose a video in a native macOS file picker. Runs
+   `ffmpeg -sseof -0.5 -i <video> -update 1 -y <video-name>_lastframe.png`.
+   It decodes the final half-second, retaining the last decoded frame. Existing
+   images require overwrite confirmation. Very short clips may not yield a frame.
+2. **Generate audio**: paste a narration JSON object, then type `END` on its own
+   line to validate and save it in the project's `scripts/` folder. Type `CANCEL`
+   on its own line to cancel. Saved scripts are listed on later visits; select
+   one to generate audio or choose **View / edit JSON** to display it and paste
+   a replacement. Invalid edits leave the saved script intact. Validates before
+   invoking the existing Kokoro generator in `wait-what-happened-voice/generate.py`.
+   Each run gets a new output folder, preserving previous runs. Requires the voice generator's
+   dependencies in `base` (see `../wait-what-happened-voice/environment.yml`).
+   The first model load may require internet. A structurally valid voice name must
+   also be supported by the installed Kokoro model.
+3. **Enhance finished video**: choose your produced video; invokes the existing
+   `video-enhance-universal.sh` with output inside `enhanced/`. This requires
+   ffprobe and the existing Real-ESRGAN executable and models. Existing enhancer
+   environment settings such as `TARGET_HEIGHT` still apply.
+4. **Open project in Finder**.
+
+Canceling a file/folder picker returns to the menu. Source files are read only.
+Audio failures can leave partial output for inspection; reruns use a new folder.
+
+Actions print timestamped stage, completion, and failure messages. Long frame,
+audio, and enhancement commands also print elapsed-time updates every 10 seconds.
+Audio generation reports model loading, synthesized chunks, completed cuts, and
+timeline/report saving. Enhancement shows six stages plus FFmpeg and Real-ESRGAN
+progress. Cut percentages measure completed cuts, rather than estimated run time.
+
+Narration JSON uses the existing generator's format:
+
+```json
+{
+  "title": "My Video",
+  "voice": "am_michael",
+  "speed": 0.94,
+  "cuts": [
+    {"id": "cut01", "start": 0, "duration": 4, "text": "Your narration here."},
+    {"id": "cut02", "start": 4, "duration": 6, "text": "The next scene."}
+  ]
+}
+```
+
+`voice` and `speed` are optional (defaults `am_michael` and `0.94`). Cuts must
+have unique safe IDs, nonempty text, finite nonnegative start times, positive
+durations, and no overlaps. Times are seconds. This accepts narration scripts,
+not the separate Gym Zoo audio transformation segment format.
+
+Audio includes individual raw/cinematic WAVs, `timing_report.json`, and the existing
+generator's `full_35s_timeline.wav` (the filename is fixed; actual duration follows
+the cuts). Narration longer than its slot is truncated in the combined timeline;
+review the timing report. This workflow does not produce the scenes themselves.
+
+Run workflow checks without downloading models:
+
+```bash
+python3 -m unittest discover -s ai-video-flow -p 'test_*.py'
+```
