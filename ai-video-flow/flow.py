@@ -12,7 +12,9 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-REPO = ROOT.parent
+LIBS = ROOT / 'libs'
+VOICE_GENERATOR = LIBS / 'voice-generator-from-script' / 'generate.py'
+VIDEO_ENHANCER = LIBS / 'video-enhancer' / 'video-enhance-universal.sh'
 STATE = ROOT / '.state' / 'projects.json'
 
 
@@ -219,7 +221,7 @@ def run_audio(project, saved):
     output = unique_path(project / 'audio', saved.stem)
     log(f'Audio output folder: {output}')
     with activity('Generating narration audio'):
-        subprocess.run([sys.executable, '-u', str(REPO / 'wait-what-happened-voice' / 'generate.py'),
+        subprocess.run([sys.executable, '-u', str(VOICE_GENERATOR),
                         '--script', str(saved), '--output', str(output)], check=True)
     print(f'Audio saved: {output}')
 
@@ -278,7 +280,7 @@ def enhance(project):
     output = unique_path(project / 'enhanced', f'{video.stem}-AI-2x.mp4')
     log(f'Enhancement output: {output}')
     with activity('Enhancing video'):
-        subprocess.run(['bash', str(REPO / 'video-enhance-universal.sh'),
+        subprocess.run(['bash', str(VIDEO_ENHANCER),
                         str(video), str(output)], check=True)
     print(f'Enhanced video: {output}')
 

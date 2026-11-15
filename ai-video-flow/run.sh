@@ -20,27 +20,27 @@ if ! conda_hook=$(conda shell.bash hook); then
   exit 1
 fi
 eval "$conda_hook"
-echo '[Startup 2/3] Activating base conda environment'
-if ! conda activate base; then
-  echo 'The base conda environment is not available. Please install or repair conda and configure its base environment first.' >&2
+echo '[Startup 2/3] Activating ai-workflow conda environment'
+if ! conda activate ai-workflow; then
+  echo 'The ai-workflow conda environment is not available. Create it first: bash ai-video-flow/setup.sh' >&2
   exit 1
 fi
 export PATH="$CONDA_PREFIX/bin:$PATH"
 echo '[Startup 3/3] Checking FFmpeg and Python'
 if ! command -v ffmpeg >/dev/null 2>&1; then
-  echo 'ffmpeg is not available on PATH after activating base. Install it or configure PATH first:' >&2
-  echo '  conda install -n base -c conda-forge ffmpeg' >&2
+  echo 'ffmpeg is not available on PATH after activating ai-workflow. Install it or configure PATH first:' >&2
+  echo '  conda install -n ai-workflow -c conda-forge ffmpeg' >&2
   exit 1
 fi
 if [[ ! -x "$CONDA_PREFIX/bin/python3" ]]; then
-  echo 'Python 3 is not available in the base conda environment. Install it first:' >&2
-  echo '  conda install -n base python' >&2
+  echo 'Python 3 is not available in the ai-workflow conda environment. Install it first:' >&2
+  echo '  conda install -n ai-workflow python' >&2
   exit 1
 fi
 if ! ffmpeg -version >/dev/null 2>&1; then
   echo 'ffmpeg on PATH could not start. Please repair or reinstall it before trying again.' >&2
   exit 1
 fi
-echo 'Using conda env: base'
+echo 'Using conda env: ai-workflow'
 echo "Using ffmpeg: $(command -v ffmpeg)"
 exec "$CONDA_PREFIX/bin/python3" "$ROOT/flow.py"

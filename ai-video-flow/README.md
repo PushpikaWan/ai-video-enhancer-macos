@@ -6,18 +6,22 @@ Run from this repository on macOS:
 bash ai-video-flow/run.sh
 ```
 
-At every launch, the script automatically activates the `base` conda environment.
-There is no environment selection prompt. Conda, Python 3, and FFmpeg must be
-installed and configured first. If a prerequisite is unavailable, the launcher
-stops with setup instructions. FFmpeg is checked on PATH after activating base;
-an existing Homebrew installation also works. If FFmpeg is missing, you can install it in base:
+One-time environment setup:
 
 ```bash
-conda install -n base -c conda-forge ffmpeg
+bash ai-video-flow/setup.sh
 ```
 
-Activation applies to the workflow and its child commands. Audio generation also
-requires the existing Kokoro generator's dependencies to be installed in `base`.
+Setup clones `wwh-voice` when available to preserve its installed voice packages,
+then adds FFmpeg (including ffprobe) and the Python espeakng-loader speech library. On a fresh machine it creates
+`ai-workflow` from `environment.yml`. Existing `base` and `wwh-voice` environments
+are left unchanged. Python 3.11 is used for the voice dependencies; base's Python
+and conda management packages are not needed by this workflow.
+
+At every launch, the script automatically activates `ai-workflow` without a
+selection prompt. Its Python and packages are used by all workflow actions.
+FFmpeg is checked on PATH after activation, so Homebrew installations also work.
+If setup is interrupted after cloning, rerun setup to finish dependencies.
 
 Choose **Create a new video project**, enter a video name, and use the macOS folder
 picker to choose its parent folder. Existing folders are never silently reused.
@@ -48,13 +52,13 @@ The project menu provides:
    on its own line to cancel. Saved scripts are listed on later visits; select
    one to generate audio or choose **View / edit JSON** to display it and paste
    a replacement. Invalid edits leave the saved script intact. Validates before
-   invoking the existing Kokoro generator in `wait-what-happened-voice/generate.py`.
+   invoking the Kokoro generator in `libs/voice-generator-from-script/generate.py`.
    Each run gets a new output folder, preserving previous runs. Requires the voice generator's
-   dependencies in `base` (see `../wait-what-happened-voice/environment.yml`).
+   dependencies in `ai-workflow` (see `environment.yml`).
    The first model load may require internet. A structurally valid voice name must
    also be supported by the installed Kokoro model.
 3. **Enhance finished video**: choose your produced video; invokes the existing
-   `video-enhance-universal.sh` with output inside `enhanced/`. This requires
+   `libs/video-enhancer/video-enhance-universal.sh` with output inside `enhanced/`. This requires
    ffprobe and the existing Real-ESRGAN executable and models. Existing enhancer
    environment settings such as `TARGET_HEIGHT` still apply.
 4. **Open project in Finder**.

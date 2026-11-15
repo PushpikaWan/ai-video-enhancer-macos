@@ -13,8 +13,12 @@ class WorkflowTests(unittest.TestCase):
         self.config = {'cuts': [{'id': 'cut01', 'start': 0, 'duration': 4, 'text': 'Hello.'}]}
 
     def test_existing_example_is_valid(self):
-        sample = flow.REPO / 'wait-what-happened-voice/scripts/narration.json'
+        sample = flow.VOICE_GENERATOR.parent / 'scripts/narration.json'
         flow.validate_script(flow.read_json(sample))
+
+    def test_workflow_scripts_exist_in_libs(self):
+        self.assertTrue(flow.VOICE_GENERATOR.is_file())
+        self.assertTrue(flow.VIDEO_ENHANCER.is_file())
 
     def test_rejects_invalid_scripts_before_generation(self):
         invalid = [[], {}, {'cuts': []}]
@@ -83,6 +87,19 @@ class WorkflowTests(unittest.TestCase):
                 saved = project / 'scripts/narration.json'
                 self.assertEqual(flow.read_json(saved), self.config)
                 self.assertIn(str(saved), run.call_args.args[0])
+                self.assertEqual(run.call_args.args[0][2], str(flow.VOICE_GENERATOR))
+
+    def test_enhance_uses_relocated_script(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / 'enhanced').mkdir()
+            video = project / 'video.mp4'
+            with patch.object(flow, 'browse', return_value=video), \
+                    patch.object(flow.subprocess, 'run') as run:
+                flow.enhance(project)
+                self.assertEqual(run.call_args.args[0], [
+                    'bash', str(flow.VIDEO_ENHANCER), str(video),
+                    str(project / 'enhanced/video-AI-2x.mp4')])
 
     def test_edit_existing_then_generate(self):
         with tempfile.TemporaryDirectory() as directory:
